@@ -1,0 +1,92 @@
+#ifndef TYPE_H
+#define TYPE_H
+//#pragma GCC diagnostic error "-std=c++11"  
+#include <iostream>
+#include <arpa/inet.h>
+//const unsigned int MESEG_BUFF_SIZE = 100;
+using namespace std;
+namespace Mtype
+{
+	//const 
+	struct StateRobot//长度一共是64。
+	{//存储client的命令单元。
+	friend istream &operator>>(istream &is,StateRobot &state);	
+		int ID;
+		int on;
+		int height;
+		int wide;
+		int rate_control;
+		int connect_i;//判断连接状态。1代表连接正常. 0代表断开连接。
+		int error ; 
+		char ip_address[INET_ADDRSTRLEN];
+		//int key; //标志此命令是否被执行,如果得到camera的回执信息，则标志为1,否则为零，刚开始初始化的时候置为1
+		char addmeseg[20];//附加信息。	
+	};
+	istream &operator>>(istream &is,StateRobot &state)
+	{
+		//string ip,add;
+	
+		is.getline((char*)&state,sizeof(StateRobot));
+		//is>>state.ID>>state.on;
+	
+		return is;
+
+	}
+	struct StateClient//长度一共是64。
+	{//存储client的命令单元。
+	friend istream &operator>>(istream &is,StateClient &state);
+		int ID;
+		int on;
+		int nrobot;
+		int connect_i;
+		int error;
+		int no1;
+		int no2;
+		char ip_address[INET_ADDRSTRLEN];
+		//int key; //标志此命令是否被执行,如果得到camera的回执信息，则标志为1,否则为零，刚开始初始化的时候置为1
+		char addmeseg[20];//附加信息。	
+	};
+	istream &operator>>(istream &is,StateClient &state)
+	{
+		//string ip,add;
+	
+		is.getline((char*)&state,sizeof(StateClient));
+		//is>>state.ID>>state.on;
+	
+		return is;
+
+	}
+	
+	//static char a ;
+	//SMeseg meseg;
+	//meseg = new SMeseg();
+	//meseg->ID;
+	//delete meseg;
+	
+	
+	struct SMeseg
+	{
+	/*
+	*对于通许定义三个字节的头(十六进制)
+	*1、第一个字节表示发送者，消息来源：1x,表示robot（x代表ID），20,代表server，3x代表client（x为0表示没有ID，即第一次连接。）。（ID编号都从1开始。）
+	*2、第二字节表示发送对象，1x表示robot（x为f表示所有robot），20表示服务器，3x表示client（x为f表示所有client）。4f表示服务器和所有robot,5f表示服务器和所有client。
+	*3、第三个字节表示命令类型,55(01010101b)表示申请连接,AA(10101010b)表示断开连接。77表示回执信息。	88表示测试信息
+	*	
+	*	Sever->Robot    01 表示申请robot工作状态。 	02表示请求更改状态。
+	*	Sever->Client	01 表示申请client工作状态。
+	*	Robot->Sever	01	表示主动发送状态。（如果是服务器或者client申请的则以回执的形式。）
+	*	Robot->Client	01	表示主动发送状态。
+	*	Client->Sever	01	表示主动发送状态。 02 表示申请所有robot的工作状态。03表示更改getlist。
+	*	Client->Robot	02	表示申请robot的工作状态。03请求更改状态。
+	*4、第四部分是消息内容
+	*	当是回执信息的时候，第一个字节应是收到的命令类型。第二个字节表示执行状态。
+	*	发送和申请更改状态的时候状态的时候，使用State结构体。
+	*/
+		unsigned char source_id;
+		unsigned char to_id;
+		unsigned char type;
+		char buffer[800];
+	};
+	//当发送多个state在buffer里的时候，要求state之间以换行字符间隔。
+}
+#endif

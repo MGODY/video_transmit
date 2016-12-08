@@ -1,0 +1,40 @@
+#ifndef CONNECT_H
+#define CONNECT_H
+
+#include <QtGui>
+#include "def.h"
+#include <string>
+#include <iostream>
+
+class TcpConnect :public QThread
+{
+	Q_OBJECT
+public:
+	TcpConnect();
+protected:
+	void run();
+
+
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
