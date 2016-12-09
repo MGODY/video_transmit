@@ -1,0 +1,25 @@
+#include "mesegtype.h"
+
+namespace Mtype 
+{
+	istream &operator>>(istream &is,StateRobot &state) //
+	{
+		//string ip,add;
+	
+		is.getline((char*)&state,sizeof(StateRobot));
+		//is>>state.ID>>state.on;
+	
+		return is;
+
+	}
+	istream &operator>>(istream &is,StateClient &state)
+	{
+		//string ip,add;
+	
+		is.getline((char*)&state,sizeof(StateClient));
+		//is>>state.ID>>state.on;
+	
+		return is;
+
+	}
+}

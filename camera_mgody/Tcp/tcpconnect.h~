@@ -4,7 +4,6 @@
 * 功能 ： 用于tcp连接服务器
 * author ： 冯坤 (mgody.fengkun@gmail.com) 
 * time : first @ 2016-12-04 , finished @
-* version 1.0
 * ISST 系统科学与技术研究所
 -------------------------------------------------*/
 #include <stdio.h>  
@@ -28,22 +27,62 @@
 #include <QThread>
 #include <QMutex>
 #include "mesegtype.h"
-void setSockNonBlock(int );
-//需要根据客户端更改的参数有：1、分辨率；2、码率 3、帧率 
-//
+
+//需要根据客户端更改的参数有：1、分辨率；2、码率 3、帧率 4、启停
+//对于这些参数{分辨率、码率}归为一类是需要更改H264编码器的参数的。
+//{分辨率、帧率归为一类} 是需要更改摄像头的参数的。
+//启停的话相对容易做到。
+
+struct SH264_change 
+{//todo 对于SH264_change 与 SCaptrue_change 这里打算不用线程锁来控制其他几个线程中的读写，而是打算利用内存模型来控制
+	//由于对于int类型的读与写是原子操作，而且这里对这8个量的操作都是读和写，只是对于整个结构体来说就不是原子操作了。
+	//所以使用内存模型控制操作结构体时候的操作顺序， 在写入结构体对象的时候，先写length、wide、rate 再写i_change。
+	//在读取的时候先判断i_change。 如果为 1,那么就将其他数据保存下来，改变H264与camera_device的参数。
+	////一点想法就是，mutex尽量用在对于函数的可重入中，保证函数的线程安全。
+	////而对于变量的线程安全，如果是频繁操作的对象，尽量通过原子操作来保证对象操作的高效性。
+	//
+	int i_change;
+	int length;
+	int wide;
+	int bit_rate;
+};
+struct SCaptrue_change
+{
+	int i_change;
+	int length;
+	int wide;
+	//int pic_rate;
+};
+
+extern int flag_system_run(0);//应答start,控制视频采集的启停。
+extern SH264_change h264_change = {0,0,0,0};
+extern SCaptrue_change capture_change = {0,0,0,0};
+
 class CTcpRobot :QThread
 {
 	QObject
 public :
-	friend void setSockNonBlock(int ); 
-	static int runflag;
+	int  threadStart();
+	void threadStop();
+	void socketInit();
+	CTcpRobot():sock(0),runflag(0),ms_sleeptime(100){};
+	CTcpRobot(int flag ,int time):sock(0),runflag(flag),ms_sleeptime(time){};
+	~CTcpRobot();
+protected :
+	void run();
 private:
 	int sock;
-	QMutex mutex_sock;
-	
-	
+	int runflag;
+	int stopflag;
+	const int ms_sleeptime;	
+	QMutex mutex_sock;//槽函数的执行是在所依附的线程执行，而发送senddate这里有可能是在槽函数中执行，所以使用mutex锁起来。
+	//int 
 private:
-	int sendstates();
+	void setSockNonBlock (int );
+	int senddate(const Mtype::SMeseg *const);
+private slots: 
+	int sendback(const unsigned char );
+	
 };
 
 

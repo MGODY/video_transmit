@@ -35,7 +35,7 @@
 #define MAX_RTP_PKT_LENGTH 1350
 #define FU_SEND_LENGTH  MAX_RTP_PKT_LENGTH-2
 //rtp's type in rtp
-#define H264_PT_ID              1 //小车ID
+#define H264_PT               1 //小车ID
 #define time_inc          90000/pic_rate
 
 #endif

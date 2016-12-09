@@ -24,6 +24,7 @@ namespace Mtype
 		int connect_i;//判断连接状态。1代表连接正常. 0代表断开连接。
 		int error ; 
 		char ip_address[INET_ADDRSTRLEN];
+		//int key; //标志此命令是否被执行,如果得到camera的回执信息，则标志为1,否则为零，刚开始初始化的时候置为1
 		char addmeseg[20];//附加信息。	
 	};
 
@@ -38,6 +39,7 @@ namespace Mtype
 		int no1;
 		int no2;
 		char ip_address[INET_ADDRSTRLEN];
+		//int key; //标志此命令是否被执行,如果得到camera的回执信息，则标志为1,否则为零，刚开始初始化的时候置为1
 		char addmeseg[20];//附加信息。	
 	};
 
