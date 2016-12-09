@@ -56,7 +56,7 @@ const QMetaObjectExtraData ProcessImage::staticMetaObjectExtraData = {
 };
 
 const QMetaObject ProcessImage::staticMetaObject = {
-    { &QWidget::staticMetaObject, qt_meta_stringdata_ProcessImage,
+    { &QMainWindow::staticMetaObject, qt_meta_stringdata_ProcessImage,
       qt_meta_data_ProcessImage, &staticMetaObjectExtraData }
 };
 
@@ -74,12 +74,14 @@ void *ProcessImage::qt_metacast(const char *_clname)
     if (!_clname) return 0;
     if (!strcmp(_clname, qt_meta_stringdata_ProcessImage))
         return static_cast<void*>(const_cast< ProcessImage*>(this));
-    return QWidget::qt_metacast(_clname);
+    if (!strcmp(_clname, "Ui::MainWindow"))
+        return static_cast< Ui::MainWindow*>(const_cast< ProcessImage*>(this));
+    return QMainWindow::qt_metacast(_clname);
 }
 
 int ProcessImage::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QWidget::qt_metacall(_c, _id, _a);
+    _id = QMainWindow::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {

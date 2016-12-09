@@ -7,8 +7,9 @@
 #define BUFFER_SIZE 1000000
 #define SOURC_IP "192.168.0.109"
 //#define DST_PORT 1234
-#define PORT_BASE 1038
-#define H264_PT 96
+#define PORT_BASE 1234
+#define H264_PT  1
+#define Video_MaxNum 4
 
 
 

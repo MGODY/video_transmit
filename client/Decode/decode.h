@@ -4,15 +4,15 @@
 extern "C"
 {
 //#include <libavutil/opt.h>
-#include <libavcodec/avcodec.h>
+#include "libavcodec/avcodec.h"
 //#include <libavutil/channel_layout.h>
 //#include <libavutil/common.h>
 //#include <libavutil/imgutils.h>
 //#include <libavutil/mathematics.h>
 //#include <libavutil/samplefmt.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libswscale/swscale.h>
+#include "libavformat/avformat.h"
+#include "libavutil/avutil.h"
+#include "libswscale/swscale.h"
 };
 #include "define.h"
 #include "Accept/accept.h"
@@ -92,12 +92,13 @@ class Decode_video :public QThread
 {
 	Q_OBJECT
 public:
-	Decode_video();
+	Decode_video(int );
 	~Decode_video();
 	Frame_Deque* p_frame_deque;
 protected:
 	void run();
 private :
+	int decodehandle;
 	AVCodec *codec;
 	AVCodecContext *c= NULL;
 	int frame,got_picture, len;

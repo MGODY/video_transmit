@@ -5,12 +5,12 @@
 //#include "jmutexautolock.h"
 //#include "jmutex.h"
 #include "define.h"
-#include <jrtplib3/rtpsession.h>
-#include <jrtplib3/rtppacket.h>
-#include <jrtplib3/rtpudpv4transmitter.h>
-#include <jrtplib3/rtpipv4address.h>
-#include <jrtplib3/rtpsessionparams.h>
-#include <jrtplib3/rtperrors.h>
+#include "jrtplib3/rtpsession.h"
+#include "jrtplib3/rtppacket.h"
+#include "jrtplib3/rtpudpv4transmitter.h"
+#include "jrtplib3/rtpipv4address.h"
+#include "jrtplib3/rtpsessionparams.h"
+#include "jrtplib3/rtperrors.h"
 #ifndef WIN32
 	#include <netinet/in.h>
 	#include <arpa/inet.h>
@@ -125,6 +125,10 @@ private:
 	unsigned char m_buffer[BUFFER_SIZE];
 	int m_current_size;
 	int status;
+	int *SSRC_Array;
+	int Num_video;
+	int p_Num_video;
+	bool process_or_not;
 
 };
 

@@ -6,9 +6,11 @@ INCLUDEPATH += . \
  Decode \
  Accept \
  lib \
- /usr/local/include
+ include
+
 HEADERS += define.h Accept/accept.h Decode/decode.h Show/processImage.h
 SOURCES += main.cpp Accept/accept.cpp Decode/decode.cpp Show/processImage.cpp
+FORMS += ui/client.ui
 LIBS += lib/libjrtp.a \
  lib/libjthread.a \
 lib/libavformat.a\

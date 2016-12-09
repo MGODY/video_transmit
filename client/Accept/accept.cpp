@@ -1,6 +1,6 @@
 
 #include"Accept/accept.h"
-CThreadSafeArray *MyRTPSession::m_ReceiveArray = new CThreadSafeArray;
+CThreadSafeArray *MyRTPSession::m_ReceiveArray = new CThreadSafeArray[Video_MaxNum];
 void CThreadSafeArray::add(CVideoData *a)
 {
 	mutex.lock();
@@ -73,13 +73,16 @@ MyRTPSession::MyRTPSession(){
 //	m_ReceiveArray = new CThreadSafeArray();
 	m_pVideoData = new CVideoData();
 	p_sps_pps = new SPS_PPS;
+	SSRC_Array = new int[Video_MaxNum];
+	Num_video = 0;
+	process_or_not = 0;
 	int status;
 	memset(m_buffer,0,BUFFER_SIZE);
 	m_current_size = 0;
 	//frist_pack_flag = 0;
 	uint16_t portbase;
 	std::string ipstr;
-
+	
 	portbase = PORT_BASE;
 	RTPUDPv4TransmissionParams transparams;
 	RTPSessionParams sessparams;
@@ -98,6 +101,8 @@ MyRTPSession::~MyRTPSession()
 	p_sps_pps = NULL;
 	delete m_pVideoData;
 	m_pVideoData = NULL;
+	delete SSRC_Array;
+	SSRC_Array = NULL;
 }
 
 
@@ -109,7 +114,7 @@ void MyRTPSession::run()
 		// check incoming packets
 		if (sess.GotoFirstSourceWithData())
 		{
-			cout<<"rtp accept test!!!"<<endl;
+			//cout<<"rtp accept test!!!"<<endl;
 			//frist_pack_flag = 1;
 			do
 			{
@@ -135,58 +140,98 @@ void MyRTPSession::ProcessRTPPacket(const RTPSourceData &srcdat,const RTPPacket 
 {
 	// You can inspect the packet and the source's info here
 	if(rtppack.GetPayloadType() == H264_PT){
-		
-		if(rtppack.HasMarker()){//如果是最后一包则进行组包
-			//m_pVideoData->m_lLength = m_current_size + rtppack.GetPayloadLength();//得到数据包总的长度
-			//这里曾犯的一个错误是，对于SPS与PPS包或者其他由于本身是没有进行分包的所以这里处理的时候首先要判断包的类型。
-			
-			//添加前导码
-			m_pVideoData->m_pBuffer[0] = 0x00;
-			m_pVideoData->m_pBuffer[1] = 0x00;
-			m_pVideoData->m_pBuffer[2] = 0x00;
-			m_pVideoData->m_pBuffer[3] = 0x01;
-			
-			FU_INDICATOR* nal_hdr;
-			nal_hdr = (FU_INDICATOR*)&m_pVideoData->m_pBuffer[4];
-			nal_hdr->f = 0;
-			nal_hdr->nri = rtppack.GetPayloadData()[0]>>5;
-			nal_hdr->type = rtppack.GetPayloadData()[0];
-			if(nal_hdr->type == 28)
-			{//这是一个分包
-				cout<<"收到分包"<<endl;
-				nal_hdr->type = rtppack.GetPayloadData()[1];
-				memcpy(m_buffer + m_current_size,rtppack.GetPayloadData()+2,rtppack.GetPayloadLength()-2);
-				m_current_size = rtppack.GetPayloadLength() + m_current_size - 2;
-				
-				memcpy(m_pVideoData->m_pBuffer + 5,m_buffer,m_current_size);
-				m_pVideoData->m_lLength = m_current_size + 5;
-			}else{//没有进行分包的。
-				//cout<<"收到SPS或者PPS"<<endl;
-				if(nal_hdr->type == 7)
+		int i(1);
+		int ssrc_Get = rtppack.GetSSRC();
+		if(0==Num_video)
+		{
+			Num_video++;
+			p_Num_video = 0;
+			process_or_not = true;
+			SSRC_Array[0] = ssrc_Get;
+		}else
+		{
+			for( i=1;i<=Num_video;i++)
+			{
+				if(ssrc_Get==SSRC_Array[i-1])
 				{
-					cout<<"get sps"<<endl;
+					p_Num_video = i-1;
+					process_or_not = true;
+					break;
 				}
-				if(nal_hdr->type == 8)
+			}
+			if(i>Num_video)
+			{
+				if(Num_video<4)
 				{
-					cout<<"get pps"<<endl;
+					Num_video++;
+					p_Num_video = Num_video -1;
+					SSRC_Array[p_Num_video] = ssrc_Get;
+					process_or_not = true;
+				}else
+				{
+					process_or_not = false;
 				}
-				memcpy(m_buffer + m_current_size,rtppack.GetPayloadData()+1,rtppack.GetPayloadLength()-1);
-				m_current_size = rtppack.GetPayloadLength() + m_current_size - 1;
+			}
+		}
+
+		if(process_or_not)
+		{
+			
+			if(rtppack.HasMarker())
+			{	//如果是最后一包则进行组包
+				//m_pVideoData->m_lLength = m_current_size + rtppack.GetPayloadLength();//得到数据包总的长度
+				//这里曾犯的一个错误是，对于SPS与PPS包或者其他由于本身是没有进行分包的所以这里处理的时候首先要判断包的类型。
 				
-				memcpy(m_pVideoData->m_pBuffer + 5,m_buffer,m_current_size);
-				m_pVideoData->m_lLength = m_current_size + 5;
+				//添加前导码
+				m_pVideoData->m_pBuffer[0] = 0x00;
+				m_pVideoData->m_pBuffer[1] = 0x00;
+				m_pVideoData->m_pBuffer[2] = 0x00;
+				m_pVideoData->m_pBuffer[3] = 0x01;
+				
+				FU_INDICATOR* nal_hdr;
+				nal_hdr = (FU_INDICATOR*)&m_pVideoData->m_pBuffer[4];
+				nal_hdr->f = 0;
+				nal_hdr->nri = rtppack.GetPayloadData()[0]>>5;
+				nal_hdr->type = rtppack.GetPayloadData()[0];
+				if(nal_hdr->type == 28)
+				{//这是一个分包
+					cout<<"收到分包"<<endl;
+					nal_hdr->type = rtppack.GetPayloadData()[1];
+					memcpy(m_buffer + m_current_size,rtppack.GetPayloadData()+2,rtppack.GetPayloadLength()-2);
+					m_current_size = rtppack.GetPayloadLength() + m_current_size - 2;
+					
+					memcpy(m_pVideoData->m_pBuffer + 5,m_buffer,m_current_size);
+					m_pVideoData->m_lLength = m_current_size + 5;
+				}else
+				{//没有进行分包的。
+					//cout<<"收到SPS或者PPS"<<endl;
+					if(nal_hdr->type == 7)
+					{
+						cout<<"get sps"<<endl;
+					}
+					if(nal_hdr->type == 8)
+					{
+						cout<<"get pps"<<endl;
+					}
+					memcpy(m_buffer + m_current_size,rtppack.GetPayloadData()+1,rtppack.GetPayloadLength()-1);
+					m_current_size = rtppack.GetPayloadLength() + m_current_size - 1;
+					
+					memcpy(m_pVideoData->m_pBuffer + 5,m_buffer,m_current_size);
+					m_pVideoData->m_lLength = m_current_size + 5;
+					
+				}
+				
+				m_ReceiveArray[p_Num_video].add(m_pVideoData);//添加到接收队列
+				std::cout<<"get pack"<<std::endl;
+				memset(m_buffer,0,m_current_size+5);//清空缓存，为下次做准备
+				m_current_size = 0;
+			}else
+			{
+					//放弃前两个字节，因为这两个字节是分包头的两个字节，要组成完整的nalu，这两个直接丢弃即可。
+					memcpy(m_buffer + m_current_size,rtppack.GetPayloadData()+2,rtppack.GetPayloadLength()-2);
+					m_current_size = m_current_size + rtppack.GetPayloadLength() - 2;
 				
 			}
-			
-			m_ReceiveArray->add(m_pVideoData);//添加到接收队列
-			std::cout<<"get pack"<<std::endl;
-			memset(m_buffer,0,m_current_size+5);//清空缓存，为下次做准备
-			m_current_size = 0;
-		}else{
-				//放弃前两个字节，因为这两个字节是分包头的两个字节，要组成完整的nalu，这两个直接丢弃即可。
-				memcpy(m_buffer + m_current_size,rtppack.GetPayloadData()+2,rtppack.GetPayloadLength()-2);
-				m_current_size = m_current_size + rtppack.GetPayloadLength() - 2;
-			
 		}
 	} 
 	

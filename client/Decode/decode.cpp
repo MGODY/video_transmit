@@ -62,10 +62,13 @@ bool Frame_Deque::isnull()
     return true;
 }
 
-Decode_video::Decode_video()
+Decode_video::Decode_video(int h)
 {
     //memset(inbuf + INBUF_SIZE, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
     //inbuf = (uint8_t *)malloc(sizeof(uint8_t)*(AUDIO_INBUF_SIZE));
+    //inbuf = new unchar[a]; 
+    decodehandle = h;
     p_nall = new CVideoData();
     p_frame_deque = new Frame_Deque();
 
@@ -124,10 +127,10 @@ void Decode_video::run()
 {
     while (1)
     {
-        if (!MyRTPSession::m_ReceiveArray->isnull())
+        if (!MyRTPSession::m_ReceiveArray[decodehandle].isnull())
         {
 			av_init_packet(&avpkt);
-            MyRTPSession::m_ReceiveArray->get(p_nall);
+            MyRTPSession::m_ReceiveArray[decodehandle].get(p_nall);
             avpkt.size =p_nall->m_lLength;
             avpkt.data =p_nall->m_pBuffer;
             //cout<<"get data "<<avpkt.data<<endl;
